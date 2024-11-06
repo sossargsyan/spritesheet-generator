@@ -3,6 +3,9 @@
 npm-debug.log
 yarn-error.log
 
+# Generated Resources
+/resources
+
 # IDEs and editors
 .idea/
 .project

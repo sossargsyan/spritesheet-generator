@@ -22,7 +22,7 @@ jobs:
         run: npm install
 
       - name: Run Node.js script to generate image
-        run: node generator.js
+        run: node index.js
 
       - uses: shallwefootball/s3-upload-action@master
         with:

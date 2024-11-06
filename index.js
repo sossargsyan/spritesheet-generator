@@ -1,51 +1,83 @@
-const http = require("http");
 const fs = require("fs");
-const path = require("node:path");
-const hostname = "127.0.0.1";
-const port = 4800;
+const path = require("path");
+const { createCanvas, loadImage } = require("canvas");
 
-const server = http.createServer((req, res) => {
-  // Set the response header to JSON for API responses
-  res.setHeader("Content-Type", "application/json");
-  console.log(req.method, req.url);
+// Directory containing the images
+const imagesDir = "./logos";
 
-  // Routing logic
-  if (req.method === "GET" && req.url === "/") {
-    res.statusCode = 200;
-    res.end(JSON.stringify({ message: "Welcome to the home page!" }));
-  } else if (req.method === "GET" && req.url === "/spritesheet") {
-    const pngPath = path.join(__dirname, "spritesheet.png");
-    const jsonPath = path.join(__dirname, "metadata.json");
+// Set up spritesheet configuration
+const logosPerRow = 5; // Number of logos per row in the spritesheet
 
-    // Check if both files exist before reading
-    if (fs.existsSync(pngPath) && fs.existsSync(jsonPath)) {
-      // Read the PNG file
-      const pngFile = fs.readFileSync(pngPath);
-      // Read the JSON file
-      const jsonFile = fs.readFileSync(jsonPath, "utf8");
+const createSpritesheet = async () => {
+  // Load all image paths from the directory
+  const imageFiles = fs
+    .readdirSync(imagesDir)
+    .filter((file) => /\.(png|jpg|jpeg)$/i.test(file));
 
-      // Set response headers for JSON and PNG boundary
-      res.statusCode = 200;
-      res.setHeader("Content-Type", "multipart/mixed; boundary=--boundary");
+  // Load images and get dimensions
+  const images = await Promise.all(
+    imageFiles.map((file) => loadImage(path.join(imagesDir, file)))
+  );
 
-      // Send a multipart response with both PNG and JSON content
-      res.write("--boundary\r\n");
-      res.write("Content-Type: image/png\r\n\r\n");
-      res.write(pngFile);
-      res.write("\r\n--boundary\r\n");
-      res.write("Content-Type: application/json\r\n\r\n");
-      res.write(jsonFile);
-      res.write("\r\n--boundary--\r\n");
-
-      res.end();
-    } else {
-      // Handle undefined routes
-      res.statusCode = 404;
-      res.end(JSON.stringify({ error: "Route not found" }));
-    }
+  if (images.length === 0) {
+    console.log("No images found in the directory.");
+    return;
   }
-});
 
-server.listen(port, hostname, () => {
-  console.log(`Server running at http://${hostname}:${port}/`);
-});
+  // Dimensions of each logo
+  const logoWidth = 40;
+  const logoHeight = 40;
+
+  // Calculate spritesheet dimensions
+  const rows = Math.ceil(images.length / logosPerRow);
+  const spritesheetWidth = logoWidth * logosPerRow;
+  const spritesheetHeight = logoHeight * rows;
+
+  // Create a canvas
+  const canvas = createCanvas(spritesheetWidth, spritesheetHeight);
+  const ctx = canvas.getContext("2d");
+
+  // Initialize metadata array
+  const metadata = [];
+
+  // Draw each logo onto the canvas and add metadata
+  images.forEach((img, index) => {
+    const x = (index % logosPerRow) * logoWidth;
+    const y = Math.floor(index / logosPerRow) * logoHeight;
+    ctx.drawImage(img, x, y, logoWidth, logoHeight);
+
+    // Add metadata for each logo
+    metadata.push({
+      filename: imageFiles[index],
+      x: x,
+      y: y,
+      width: logoWidth,
+      height: logoHeight,
+    });
+  });
+
+  // Create a folder to save the spritesheet and metadata
+  const folderName = path.join(__dirname, "resources");
+  try {
+    if (!fs.existsSync(folderName)) {
+      fs.mkdirSync(folderName);
+    }
+  } catch (err) {
+    console.error(err);
+  }
+
+  // Save the spritesheet to a file
+  const outputPath = path.join(folderName, "spritesheet.png");
+  const out = fs.createWriteStream(outputPath);
+  const stream = canvas.createPNGStream();
+  stream.pipe(out);
+  out.on("finish", () => console.log(`Spritesheet saved as ${outputPath}`));
+
+  // Save the metadata to a JSON file
+  const metadataPath = path.join(folderName, "metadata.json");
+  fs.writeFileSync(metadataPath, JSON.stringify(metadata, null, 2));
+  console.log(`Metadata saved as ${metadataPath}`);
+};
+
+// Run the spritesheet generation function
+createSpritesheet().catch(console.error);
