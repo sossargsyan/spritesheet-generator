@@ -30,4 +30,4 @@ jobs:
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY}}
           aws_bucket: ${{ secrets.AWS_BUCKET }}
           destination_dir: 'logos/'
-          source_dir: 'resources/spritesheet.png'
+          source_dir: 'resources/metadata.json'
