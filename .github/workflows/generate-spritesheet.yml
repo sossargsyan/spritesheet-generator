@@ -30,4 +30,5 @@ jobs:
           aws_key_id: ${{ secrets.AWS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY}}
           aws_bucket: ${{ secrets.AWS_BUCKET }}
-          source_dir: '../../spritesheet.png'
+          destination_dir: 'logos/'
+          source_dir: '/home/runner/work/spritesheet-generator/spritesheet-generator/spritesheet.png'
