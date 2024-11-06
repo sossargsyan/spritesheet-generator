@@ -80,7 +80,7 @@ async function createSpritesheet() {
   out.on("finish", () => console.log(`Spritesheet saved as ${outputPath}`));
 
   // Save the metadata to a JSON file
-  const metadataPath = path.join(__dirname, "metadata.json");
+  const metadataPath = path.join(folderName, "metadata.json");
   fs.writeFileSync(metadataPath, JSON.stringify(metadata, null, 2));
   console.log(`Metadata saved as ${metadataPath}`);
 }
