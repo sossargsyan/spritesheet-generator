@@ -20,8 +20,8 @@ const createSpritesheet = async () => {
       imageFiles.map((file) => loadImage(path.join(imagesDir, file)))
     );
 
-    const logoWidth = 40;
-    const logoHeight = 40;
+    const logoWidth = 24;
+    const logoHeight = 24;
     const rows = Math.ceil(images.length / logosPerRow);
     const spritesheetWidth = logoWidth * logosPerRow;
     const spritesheetHeight = logoHeight * rows;
