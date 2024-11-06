@@ -61,8 +61,19 @@ async function createSpritesheet() {
     });
   });
 
+  // Create a folder to save the spritesheet and metadata
+  const folderName = path.join(__dirname, "resources");
+  try {
+    if (!fs.existsSync(folderName)) {
+      fs.mkdirSync(folderName);
+
+    }
+  } catch (err) {
+    console.error(err);
+  }
+
   // Save the spritesheet to a file
-  const outputPath = path.join(__dirname, "spritesheet.png");
+  const outputPath = path.join(folderName, "spritesheet.png");
   const out = fs.createWriteStream(outputPath);
   const stream = canvas.createPNGStream();
   stream.pipe(out);
