@@ -1,83 +1,63 @@
-const fs = require("fs");
-const path = require("path");
-const { createCanvas, loadImage } = require("canvas");
+import fs from "fs/promises";
+import path from "path";
+import { createCanvas, loadImage } from "canvas";
 
-// Directory containing the images
 const imagesDir = "./logos";
-
-// Set up spritesheet configuration
-const logosPerRow = 5; // Number of logos per row in the spritesheet
+const logosPerRow = 5;
 
 const createSpritesheet = async () => {
-  // Load all image paths from the directory
-  const imageFiles = fs
-    .readdirSync(imagesDir)
-    .filter((file) => /\.(png|jpg|jpeg)$/i.test(file));
-
-  // Load images and get dimensions
-  const images = await Promise.all(
-    imageFiles.map((file) => loadImage(path.join(imagesDir, file)))
-  );
-
-  if (images.length === 0) {
-    console.log("No images found in the directory.");
-    return;
-  }
-
-  // Dimensions of each logo
-  const logoWidth = 40;
-  const logoHeight = 40;
-
-  // Calculate spritesheet dimensions
-  const rows = Math.ceil(images.length / logosPerRow);
-  const spritesheetWidth = logoWidth * logosPerRow;
-  const spritesheetHeight = logoHeight * rows;
-
-  // Create a canvas
-  const canvas = createCanvas(spritesheetWidth, spritesheetHeight);
-  const ctx = canvas.getContext("2d");
-
-  // Initialize metadata array
-  const metadata = [];
-
-  // Draw each logo onto the canvas and add metadata
-  images.forEach((img, index) => {
-    const x = (index % logosPerRow) * logoWidth;
-    const y = Math.floor(index / logosPerRow) * logoHeight;
-    ctx.drawImage(img, x, y, logoWidth, logoHeight);
-
-    // Add metadata for each logo
-    metadata.push({
-      filename: imageFiles[index],
-      x: x,
-      y: y,
-      width: logoWidth,
-      height: logoHeight,
-    });
-  });
-
-  // Create a folder to save the spritesheet and metadata
-  const folderName = path.join(__dirname, "resources");
   try {
-    if (!fs.existsSync(folderName)) {
-      fs.mkdirSync(folderName);
+    const imageFiles = (await fs.readdir(imagesDir)).filter((file) =>
+      /\.(png|jpg|jpeg)$/i.test(file)
+    );
+
+    if (imageFiles.length === 0) {
+      console.log("No images found in the directory.");
+      return;
     }
-  } catch (err) {
-    console.error(err);
+
+    const images = await Promise.all(
+      imageFiles.map((file) => loadImage(path.join(imagesDir, file)))
+    );
+
+    const logoWidth = 40;
+    const logoHeight = 40;
+    const rows = Math.ceil(images.length / logosPerRow);
+    const spritesheetWidth = logoWidth * logosPerRow;
+    const spritesheetHeight = logoHeight * rows;
+    const canvas = createCanvas(spritesheetWidth, spritesheetHeight);
+    const ctx = canvas.getContext("2d");
+    const metadata = [];
+    const folderName = path.join(process.cwd(), "resources");
+
+    images.forEach((img, index) => {
+      const x = (index % logosPerRow) * logoWidth;
+      const y = Math.floor(index / logosPerRow) * logoHeight;
+      ctx.drawImage(img, x, y, logoWidth, logoHeight);
+
+      metadata.push({
+        filename: imageFiles[index],
+        x,
+        y,
+        width: logoWidth,
+        height: logoHeight,
+      });
+    });
+
+    await fs.mkdir(folderName, { recursive: true });
+
+    const outputPath = path.join(folderName, "spritesheet.png");
+    const stream = canvas.createPNGStream();
+    const out = await fs.writeFile(outputPath, stream);
+
+    console.log(`Spritesheet saved as ${outputPath}`);
+
+    const metadataPath = path.join(folderName, "metadata.json");
+    await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2));
+    console.log(`Metadata saved as ${metadataPath}`);
+  } catch (error) {
+    console.error(error);
   }
-
-  // Save the spritesheet to a file
-  const outputPath = path.join(folderName, "spritesheet.png");
-  const out = fs.createWriteStream(outputPath);
-  const stream = canvas.createPNGStream();
-  stream.pipe(out);
-  out.on("finish", () => console.log(`Spritesheet saved as ${outputPath}`));
-
-  // Save the metadata to a JSON file
-  const metadataPath = path.join(folderName, "metadata.json");
-  fs.writeFileSync(metadataPath, JSON.stringify(metadata, null, 2));
-  console.log(`Metadata saved as ${metadataPath}`);
 };
 
-// Run the spritesheet generation function
-createSpritesheet().catch(console.error);
+createSpritesheet();
