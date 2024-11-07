@@ -3,7 +3,7 @@ import path from "path";
 import { createCanvas, loadImage } from "canvas";
 
 const imagesDir = "./logos";
-const logosPerRow = 5;
+const logosPerRow = 8;
 
 const createSpritesheet = async () => {
   try {
