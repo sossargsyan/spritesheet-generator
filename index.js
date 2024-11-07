@@ -48,8 +48,7 @@ const createSpritesheet = async () => {
 
     const outputPath = path.join(folderName, "spritesheet.png");
     const stream = canvas.createPNGStream();
-    const out = await fs.writeFile(outputPath, stream);
-
+    await fs.writeFile(outputPath, stream);
     console.log(`Spritesheet saved as ${outputPath}`);
 
     const metadataPath = path.join(folderName, "metadata.json");
